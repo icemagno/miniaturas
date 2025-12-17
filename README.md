@@ -1,4 +1,4 @@
-# Gerenciados de Miniaturas Hot Wheels
+# Gerenciador de Miniaturas Hot Wheels
 
 # Variáveis de ambiente necessárias
 ```
