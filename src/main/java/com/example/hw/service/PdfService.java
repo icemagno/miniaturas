@@ -5,12 +5,18 @@ import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
+import com.lowagie.text.Image;
 import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -46,5 +52,65 @@ public class PdfService {
         }
 
         return out.toByteArray();
+    }
+
+    public byte[] createPdfWithPictures(List<Carrinho> carrinhos) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (Document document = new Document(PageSize.A4.rotate())) {
+            PdfWriter.getInstance(document, out);
+            document.open();
+
+            PdfPTable table = new PdfPTable(4);
+            table.setWidthPercentage(100);
+
+            Font itemFont = FontFactory.getFont(FontFactory.HELVETICA, 8);
+
+            for (Carrinho carrinho : carrinhos) {
+                PdfPCell cell = new PdfPCell();
+                cell.setPadding(5);
+
+                if (carrinho.getImagem() != null && !carrinho.getImagem().isEmpty()) {
+                    try {
+                        byte[] imageBytes = Base64.getDecoder().decode(carrinho.getImagem().split(",")[1]);
+                        Image image = Image.getInstance(imageBytes);
+                        image.scaleToFit(120, 120);
+                        cell.addElement(image);
+                    } catch (IOException | DocumentException e) {
+                        cell.addElement(createPlaceholderCell());
+                    }
+                } else {
+                    cell.addElement(createPlaceholderCell());
+                }
+
+                Paragraph details = new Paragraph(carrinho.getCodigo() + "\n" + carrinho.getDescricao(), itemFont);
+                cell.addElement(details);
+                table.addCell(cell);
+            }
+
+            // Fill remaining cells in the last row
+            int remaining = 4 - (carrinhos.size() % 4);
+            if (remaining > 0 && remaining < 4) {
+                for (int i = 0; i < remaining; i++) {
+                    table.addCell(new PdfPCell(new Phrase("")));
+                }
+            }
+
+            document.add(table);
+
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+        return out.toByteArray();
+    }
+
+    private PdfPTable createPlaceholderCell() {
+        PdfPTable placeholder = new PdfPTable(1);
+        placeholder.setWidthPercentage(100);
+        PdfPCell innerCell = new PdfPCell(new Phrase("Sem Imagem"));
+        innerCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
+        innerCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
+        innerCell.setFixedHeight(120);
+        placeholder.addCell(innerCell);
+        return placeholder;
     }
 }

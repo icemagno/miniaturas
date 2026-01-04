@@ -67,4 +67,29 @@ public class CarrinhoService {
     public long countTotalCarrinhos() {
         return carrinhoRepository.count();
     }
+
+    public Optional<CarrinhoListDTO> checkCarrinho(String codigo) {
+        List<Carrinho> carrinhos = carrinhoRepository.findFullCarrinhoByCodigo(codigo);
+        if (!carrinhos.isEmpty()) {
+            // Assuming codigo is unique, so we take the first one
+            Carrinho carrinho = carrinhos.get(0);
+            carrinho.setChecked(true);
+            Carrinho savedCarrinho = carrinhoRepository.save(carrinho);
+            return Optional.of(new CarrinhoListDTO(savedCarrinho.getId(), savedCarrinho.getCodigo(), savedCarrinho.getDescricao(), savedCarrinho.getChecked()));
+        }
+        return Optional.empty();
+    }
+
+    public List<Carrinho> findAllUnchecked() {
+        return carrinhoRepository.findByCheckedIsNullOrCheckedIsFalse();
+    }
+
+    public List<Carrinho> findAllChecked() {
+        return carrinhoRepository.findByCheckedTrue();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public void resetAllChecked() {
+        carrinhoRepository.resetAllChecked();
+    }
 }

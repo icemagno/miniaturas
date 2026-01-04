@@ -6,6 +6,7 @@ public class CarrinhoDetailDTO {
     private String descricao;
     private CategoriaCarrinho categoria;
     private String imagem;
+    private Boolean checked;
 
     public CarrinhoDetailDTO(Carrinho carrinho) {
         this.id = carrinho.getId();
@@ -13,9 +14,18 @@ public class CarrinhoDetailDTO {
         this.descricao = carrinho.getDescricao();
         this.categoria = carrinho.getCategoria();
         this.imagem = carrinho.getImagem();
+        this.checked = carrinho.getChecked();
     }
 
     // Getters and setters
+
+    public Boolean getChecked() {
+        return checked;
+    }
+
+    public void setChecked(Boolean checked) {
+        this.checked = checked;
+    }
 
     public Long getId() {
         return id;

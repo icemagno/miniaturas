@@ -32,6 +32,36 @@ public class CarrinhoController {
                 .body(pdf);
     }
 
+    @GetMapping("/export/pdf/unchecked")
+    public ResponseEntity<byte[]> exportPdfUnchecked() {
+        List<Carrinho> carrinhos = carrinhoService.findAllUnchecked();
+        byte[] pdf = pdfService.createPdf(carrinhos);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=carrinhos-nao-checados.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @GetMapping("/export/pdf/checked")
+    public ResponseEntity<byte[]> exportPdfChecked() {
+        List<Carrinho> carrinhos = carrinhoService.findAllChecked();
+        byte[] pdf = pdfService.createPdf(carrinhos);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=carrinhos-checados.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @GetMapping("/export/pdf/pictures")
+    public ResponseEntity<byte[]> exportPdfWithPictures() {
+        List<Carrinho> carrinhos = carrinhoService.findAll();
+        byte[] pdf = pdfService.createPdfWithPictures(carrinhos);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=carrinhos-com-fotos.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @GetMapping
     public List<CarrinhoListDTO> findAll() {
         return carrinhoService.findAllProjectedBy();
@@ -87,5 +117,18 @@ public class CarrinhoController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PostMapping("/check/{codigo}")
+    public ResponseEntity<CarrinhoListDTO> checkCarrinho(@PathVariable String codigo) {
+        return carrinhoService.checkCarrinho(codigo)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/reset-checked")
+    public ResponseEntity<Void> resetAllChecked() {
+        carrinhoService.resetAllChecked();
+        return ResponseEntity.noContent().build();
     }
 }

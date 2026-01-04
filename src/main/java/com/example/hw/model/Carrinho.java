@@ -28,7 +28,17 @@ public class Carrinho {
     @Column(name = "imagem", columnDefinition="TEXT")
     private String imagem;
 
+    private Boolean checked;
+
     // getters and setters
+
+    public Boolean getChecked() {
+        return checked;
+    }
+
+    public void setChecked(Boolean checked) {
+        this.checked = checked;
+    }
 
     public Long getId() {
         return id;
