@@ -1,0 +1,10 @@
+The `de.androidpit.colorthief.ColorThief` library, which our application uses, determines predominant colors using an algorithm called **Modified Median Cut Quantization (MMCQ)**.
+
+Here's how it generally addresses your concern:
+
+*   **Clustering Similar Colors**: MMCQ works by analyzing all the colors in an image and grouping similar colors together into "clusters."
+*   **Ranking by Prevalence**: From these clusters, it then identifies the most representative colors. The "predominant" aspect comes from the size or prevalence of these clusters in the image. If a car is *mostly* red, the algorithm will form a very large "red" cluster.
+*   **Guaranteed Dominant Color**: When you ask for `numColors` (in your case, 3), `ColorThief` is designed to return the colors that are most representative and visually dominant based on these clusters. So, if red is truly the overwhelming color, it will definitely be among the 3 chosen colors. The algorithm prioritizes colors that cover a larger area or appear more frequently.
+*   **Not Just "Any" Colors**: It doesn't just pick any 3 colors; it picks the 3 colors that best represent the overall color scheme of the image based on their statistical dominance.
+
+Therefore, you can be reasonably confident that if a car is predominantly red, red will be one of the three colors selected by the `ColorThief` algorithm, along with the next two most dominant colors. It's designed to give a good visual summary of the image's main colors.

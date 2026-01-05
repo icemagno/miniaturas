@@ -89,18 +89,11 @@ public class PdfService {
                         Carrinho carrinho = displayCell.getCarrinho();
                         if (carrinho.getImagem() != null) {
                             try {
-                                List<int[]> palette = colorService.extractPalette(carrinho.getImagem(), 8);
-                                if (palette != null) {
-                                    BufferedImage paletteImage = colorService.createPaletteImage(palette, 50, 25);
-                                    if (paletteImage != null) {
-                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                                        ImageIO.write(paletteImage, "png", baos);
-                                        Image image = Image.getInstance(baos.toByteArray());
-                                        image.scaleToFit(50, 25);
-                                        imageCell.setImage(image);
-                                    }
-                                }
-                            } catch (IOException e) {
+                                byte[] imageBytes = Base64.getDecoder().decode(carrinho.getImagem().split(",")[1]);
+                                Image image = Image.getInstance(imageBytes);
+                                image.scaleToFit(50, 25); // Scale to the desired size
+                                imageCell.setImage(image);
+                            } catch (IOException | DocumentException e) {
                                 e.printStackTrace(); // fall through, imageCell will be empty
                             }
                         }
