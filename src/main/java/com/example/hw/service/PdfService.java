@@ -3,11 +3,10 @@ package com.example.hw.service;
 import com.example.hw.model.Carrinho;
 import com.example.hw.model.Display;
 import com.example.hw.model.DisplayCell;
-import com.example.hw.model.DisplayCellDTO;
-import com.example.hw.repository.DisplayCellRepository;
 import com.example.hw.repository.DisplayRepository;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
+import com.lowagie.text.Element;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.Image;
@@ -20,15 +19,18 @@ import com.lowagie.text.pdf.PdfWriter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.Base64;
+
+import javax.imageio.ImageIO;
 
 
 @Service
@@ -38,7 +40,7 @@ public class PdfService {
     private DisplayRepository displayRepository;
 
     @Autowired
-    private DisplayCellRepository displayCellRepository;
+    private ColorService colorService;
 
     public byte[] createDisplayPdf(Long displayId) {
         Optional<Display> displayOptional = displayRepository.findById(displayId);
@@ -46,7 +48,6 @@ public class PdfService {
             return new byte[0];
         }
         Display display = displayOptional.get();
-        List<DisplayCellDTO> cells = displayCellRepository.findProjectedByDisplayId(displayId);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (Document document = new Document(PageSize.A4)) {
@@ -60,24 +61,65 @@ public class PdfService {
             PdfPTable table = new PdfPTable(5);
             table.setWidthPercentage(100);
 
-            Map<String, DisplayCellDTO> cellMap = cells.stream()
-                    .collect(Collectors.toMap(DisplayCellDTO::getCellCode, Function.identity()));
+            Map<String, DisplayCell> cellMap = display.getCells().stream()
+                    .collect(Collectors.toMap(DisplayCell::getCellCode, Function.identity()));
 
             char[] rows = "ABCDEFGHIJKLMNO".toCharArray();
             for (char row : rows) {
                 for (int col = 1; col <= 5; col++) {
                     String cellCode = row + String.valueOf(col);
-                    DisplayCellDTO displayCell = cellMap.get(cellCode);
+                    DisplayCell displayCell = cellMap.get(cellCode);
 
                     PdfPCell cell = new PdfPCell();
                     cell.setFixedHeight(30f);
-                    cell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
-                    cell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
+                    cell.setPadding(0); // Remove padding to let nested table fill the space
 
                     if (displayCell != null && displayCell.getCarrinho() != null) {
+                        // Create a nested table for image and text
+                        PdfPTable nestedTable = new PdfPTable(2);
+                        nestedTable.setWidthPercentage(100);
+                        nestedTable.setWidths(new float[]{1.5f, 2f}); // Adjust column widths
+
+                        // Image Cell (Left)
+                        PdfPCell imageCell = new PdfPCell();
+                        imageCell.setBorder(PdfPCell.NO_BORDER);
+                        imageCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                        imageCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+
+                        Carrinho carrinho = displayCell.getCarrinho();
+                        if (carrinho.getImagem() != null) {
+                            try {
+                                List<int[]> palette = colorService.extractPalette(carrinho.getImagem(), 8);
+                                if (palette != null) {
+                                    BufferedImage paletteImage = colorService.createPaletteImage(palette, 50, 25);
+                                    if (paletteImage != null) {
+                                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                        ImageIO.write(paletteImage, "png", baos);
+                                        Image image = Image.getInstance(baos.toByteArray());
+                                        image.scaleToFit(50, 25);
+                                        imageCell.setImage(image);
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace(); // fall through, imageCell will be empty
+                            }
+                        }
+                        nestedTable.addCell(imageCell);
+
+                        // Text Cell (Right)
                         Font mainFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.BLACK);
-                        cell.setPhrase(new Phrase(displayCell.getCarrinho().getCodigo(), mainFont));
+                        PdfPCell textCell = new PdfPCell(new Phrase(carrinho.getCodigo(), mainFont));
+                        textCell.setBorder(PdfPCell.NO_BORDER);
+                        textCell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                        textCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        nestedTable.addCell(textCell);
+
+                        cell.addElement(nestedTable);
+
                     } else {
+                        // Empty cell logic
+                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
                         Font placeholderFont = FontFactory.getFont(FontFactory.HELVETICA, 6, Color.BLACK);
                         cell.setPhrase(new Phrase(cellCode, placeholderFont));
                     }
@@ -86,7 +128,7 @@ public class PdfService {
             }
             document.add(table);
 
-        } catch (DocumentException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return out.toByteArray();
