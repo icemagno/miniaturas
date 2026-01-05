@@ -1,0 +1,204 @@
+<!DOCTYPE HTML>
+<html manifest="">
+
+<head th:insert="~{head}"></head>
+	<style>
+		.grid-container {
+			display: grid;
+			grid-template-columns: repeat(5, 120px); /* Fixed width for columns */
+			grid-template-rows: repeat(15, 40px); /* Fixed height for rows */
+			gap: 5px;
+			padding: 10px;
+			background-color: #f4f4f4;
+			border-radius: 4px;
+			width: fit-content; /* Adjust grid width to fit content */
+			margin: auto; /* Center the grid */
+		}
+		.grid-cell {
+			background-color: #fff;
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			padding: 2px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			position: relative; /* For positioning the cell code */
+		}
+		.grid-cell.occupied {
+			background-color: #dff0d8; /* success color for occupied cells */
+		}
+		.grid-cell-label {
+			position: absolute;
+			top: 2px;
+			left: 2px;
+			font-size: 8px;
+			color: #aaa;
+		}
+		.grid-cell input {
+			width: calc(100% - 4px); /* Full width minus padding */
+			height: calc(100% - 4px); /* Full height minus padding */
+			border: none;
+			text-align: center;
+			font-size: 12px;
+			background-color: transparent; /* Match cell background */
+			padding-top: 10px; /* Make space for label */
+		}
+		.grid-cell input:focus {
+			outline: none;
+		}
+	</style>
+</head>
+
+<body class="skin-black layout-top-nav" style="height: auto; min-height: 100%;">
+
+	<div class="wrapper" style="height: auto; min-height: 100%;">
+		
+		<header class="main-header" th:insert="~{navbar}"></header>
+
+		<div class="content-wrapper" style="position: relative; min-height: 600px;">
+		    <section class="content">
+				<div class="box box-primary">
+					<div class="box-header with-border">
+						<h3 class="box-title">Expositores</h3>
+						<div id="display-buttons-container" class="pull-right">
+							<!-- Display buttons will be inserted here -->
+						</div>
+					</div>
+					<div class="box-body" id="display-grid-container" style="min-height: 500px;">
+						<!-- Display grid will be rendered here -->
+					</div>
+					<div id="display-footer" class="box-footer">
+						Selecione um expositor para visualizar as células.
+					</div>
+				</div>
+		    </section>
+		</div>
+		<footer th:insert="~{footer}" class="main-footer">
+		</footer>
+
+	</div>
+
+	<script src="/adminlte/bower_components/jquery/dist/jquery.min.js"></script>
+	<script	src="/adminlte/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+	<script src="/adminlte/dist/js/adminlte.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+		
+	<script>
+		$(document).ready(function() {
+			const displayButtonsContainer = document.getElementById('display-buttons-container');
+			const displayGridContainer = document.getElementById('display-grid-container');
+			const displayFooter = document.getElementById('display-footer');
+
+			function fetchDisplays() {
+				fetch('/api/displays')
+					.then(response => response.json())
+					.then(displays => {
+						if (displays && displays.length > 0) {
+							renderDisplayButtons(displays);
+							// Automatically load the first display
+							fetchCells(displays[0].id);
+							// Highlight first button
+							setTimeout(() => {
+								const firstButton = displayButtonsContainer.querySelector('button');
+								if (firstButton) {
+									firstButton.classList.add('btn-primary');
+									firstButton.classList.remove('btn-default');
+								}
+							}, 0);
+						}
+					});
+			}
+
+			function fetchCells(displayId) {
+				displayGridContainer.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fa fa-spinner fa-spin fa-3x"></i></div>';
+				fetch(`/api/displays/${displayId}/cells`)
+					.then(response => response.json())
+					.then(cells => {
+						renderGrid(cells);
+					});
+			}
+
+			function renderGrid(cells) {
+				displayGridContainer.innerHTML = '';
+				const grid = document.createElement('div');
+				grid.className = 'grid-container';
+
+				// Create a map for quick lookup
+				const cellMap = new Map(cells.map(cell => [cell.cellCode, cell]));
+
+				const rows = "ABCDEFGHIJKLMNO".split('');
+				const cols = [1, 2, 3, 4, 5];
+				let occupiedCount = 0;
+
+				rows.forEach(row => {
+					cols.forEach(col => {
+						const cellCode = `${row}${col}`;
+						const cellData = cellMap.get(cellCode);
+						const cellDiv = document.createElement('div');
+						cellDiv.className = 'grid-cell';
+						
+						const cellLabel = document.createElement('span');
+						cellLabel.className = 'grid-cell-label';
+						cellLabel.textContent = cellCode;
+						cellDiv.appendChild(cellLabel);
+
+						const input = document.createElement('input');
+						input.type = 'text';
+						input.id = `cellInput_${cellCode}`;
+						input.setAttribute('data-cell-code', cellCode);
+						input.readOnly = true; // For now, as requested
+						input.maxLength = 10; // Approximately 10 characters
+
+						if (cellData && cellData.carrinho) {
+							input.value = cellData.carrinho.codigo;
+							cellDiv.classList.add('occupied');
+							occupiedCount++;
+						} else {
+							input.value = '';
+						}
+						grid.appendChild(cellDiv);
+						cellDiv.appendChild(input);
+					});
+				});
+
+				displayGridContainer.appendChild(grid);
+				const totalCells = rows.length * cols.length;
+				displayFooter.textContent = `Exibindo ${totalCells} células. Ocupadas: ${occupiedCount}. Livres: ${totalCells - occupiedCount}.`;
+			}
+
+			function renderDisplayButtons(displays) {
+				displayButtonsContainer.innerHTML = '';
+				const buttonGroup = document.createElement('div');
+				buttonGroup.className = 'btn-group';
+
+				displays.forEach(display => {
+					const button = document.createElement('button');
+					button.type = 'button';
+					button.className = 'btn btn-default';
+					button.textContent = display.displayCode;
+					button.setAttribute('data-display-id', display.id);
+					
+					button.addEventListener('click', function() {
+						// Remove active state from all buttons
+						const allButtons = displayButtonsContainer.querySelectorAll('button');
+						allButtons.forEach(btn => {
+							btn.classList.remove('btn-primary');
+							btn.classList.add('btn-default');
+						});
+						// Add active state to the clicked button
+						this.classList.add('btn-primary');
+						this.classList.remove('btn-default');
+						
+						fetchCells(display.id);
+					});
+					buttonGroup.appendChild(button);
+				});
+				displayButtonsContainer.appendChild(buttonGroup);
+			}
+
+			// Initial load
+			fetchDisplays();
+		});
+	</script>
+</body>
+</html>

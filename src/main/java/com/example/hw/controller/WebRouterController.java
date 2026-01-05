@@ -14,7 +14,7 @@ public class WebRouterController {
 
     @GetMapping("/")
     public String homePage(Model model) {
-    	return "main";
+    	return "index";
     }	
 
     

@@ -10,4 +10,9 @@ public class ViewController {
     public String check() {
         return "check";
     }
+
+    @GetMapping("/display")
+    public String display() {
+        return "display";
+    }
 }

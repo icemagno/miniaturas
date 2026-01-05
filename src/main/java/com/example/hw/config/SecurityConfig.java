@@ -21,10 +21,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/login", 
                         "/common/**", 
-                        "/adminlte/**", 
-                        "/", 
-                        "/carrinho/**", 
-                        "/categoria-carrinho/**"
+                        "/adminlte/**"
                     ).permitAll()
                     .anyRequest().authenticated()
             )
