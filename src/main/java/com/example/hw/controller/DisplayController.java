@@ -2,13 +2,14 @@ package com.example.hw.controller;
 
 import com.example.hw.model.DisplayCellDTO;
 import com.example.hw.model.DisplayDTO;
-import com.example.hw.repository.DisplayCellRepository;
+import com.example.hw.model.UpdateCellRequestDTO;
 import com.example.hw.repository.DisplayRepository;
+import com.example.hw.service.DisplayService;
+import com.example.hw.service.PdfService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +22,10 @@ public class DisplayController {
     private DisplayRepository displayRepository;
 
     @Autowired
-    private DisplayCellRepository displayCellRepository;
+    private DisplayService displayService;
+
+    @Autowired
+    private PdfService pdfService;
 
     @GetMapping
     public List<DisplayDTO> findAll() {
@@ -32,8 +36,26 @@ public class DisplayController {
 
     @GetMapping("/{displayId}/cells")
     public List<DisplayCellDTO> findCellsByDisplayId(@PathVariable Long displayId) {
-        return displayCellRepository.findByDisplayId(displayId).stream()
-                .map(cell -> new DisplayCellDTO(cell.getId(), cell.getCellCode(), cell.getCarrinho()))
-                .collect(Collectors.toList());
+        return displayService.findCellsByDisplayId(displayId);
+    }
+
+    @PostMapping("/cells/update")
+    public ResponseEntity<Void> updateCell(@RequestBody UpdateCellRequestDTO request) {
+        boolean success = displayService.updateCell(request);
+        if (success) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.badRequest().build(); // Or another appropriate error response
+        }
+    }
+
+    @GetMapping("/{displayId}/export/pdf")
+    public ResponseEntity<byte[]> exportDisplayPdf(@PathVariable Long displayId) {
+        byte[] pdf = pdfService.createDisplayPdf(displayId);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=display_" + displayId + ".pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 }
+

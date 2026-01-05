@@ -22,10 +22,20 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			position: relative; /* For positioning the cell code */
+			position: relative; /* For positioning the cell code and autocomplete */
+			transition: background-color 0.5s ease;
 		}
 		.grid-cell.occupied {
 			background-color: #dff0d8; /* success color for occupied cells */
+		}
+		.grid-cell.focused {
+			border: 1px solid #007bff; /* AdminLTE blue for focused state */
+		}
+		.grid-cell.update-success {
+			background-color: #5cb85c;
+		}
+		.grid-cell.update-error {
+			background-color: #d9534f;
 		}
 		.grid-cell-label {
 			position: absolute;
@@ -42,9 +52,30 @@
 			font-size: 12px;
 			background-color: transparent; /* Match cell background */
 			padding-top: 10px; /* Make space for label */
+			text-transform: uppercase;
 		}
 		.grid-cell input:focus {
-			outline: none;
+			outline: none; /* Remove the default outline */
+		}
+		.autocomplete-results {
+			position: absolute;
+			top: 100%; /* Position below the input */
+			left: 0;
+			right: 0;
+			background-color: #fff;
+			border: 1px solid #ddd;
+			border-top: none;
+			z-index: 1000;
+			max-height: 150px;
+			overflow-y: auto;
+		}
+		.autocomplete-item {
+			padding: 8px;
+			cursor: pointer;
+			font-size: 12px;
+		}
+		.autocomplete-item:hover {
+			background-color: #f0f0f0;
 		}
 	</style>
 </head>
@@ -60,8 +91,16 @@
 				<div class="box box-primary">
 					<div class="box-header with-border">
 						<h3 class="box-title">Expositores</h3>
-						<div id="display-buttons-container" class="pull-right">
-							<!-- Display buttons will be inserted here -->
+						<div class="box-tools pull-right">
+							<a href="#" id="export-pdf-button" class="btn btn-default btn-sm" title="Exportar para PDF"><i class="fa fa-file-pdf-o"></i></a>
+						</div>
+					</div>
+					<!-- New div for display buttons -->
+					<div id="display-selector-row" class="row">
+						<div class="col-xs-12 text-center">
+							<div id="display-buttons-container" class="btn-group" style="margin-bottom: 10px;">
+								<!-- Display buttons will be inserted here -->
+							</div>
 						</div>
 					</div>
 					<div class="box-body" id="display-grid-container" style="min-height: 500px;">
@@ -88,6 +127,7 @@
 			const displayButtonsContainer = document.getElementById('display-buttons-container');
 			const displayGridContainer = document.getElementById('display-grid-container');
 			const displayFooter = document.getElementById('display-footer');
+			let currentDisplayId = null;
 
 			function fetchDisplays() {
 				fetch('/api/displays')
@@ -95,9 +135,7 @@
 					.then(displays => {
 						if (displays && displays.length > 0) {
 							renderDisplayButtons(displays);
-							// Automatically load the first display
 							fetchCells(displays[0].id);
-							// Highlight first button
 							setTimeout(() => {
 								const firstButton = displayButtonsContainer.querySelector('button');
 								if (firstButton) {
@@ -110,6 +148,11 @@
 			}
 
 			function fetchCells(displayId) {
+				currentDisplayId = displayId; // Store current display ID
+				const exportButton = document.getElementById('export-pdf-button');
+				if (exportButton) {
+					exportButton.href = `/api/displays/${displayId}/export/pdf`;
+				}
 				displayGridContainer.innerHTML = '<div style="text-align:center; padding: 50px;"><i class="fa fa-spinner fa-spin fa-3x"></i></div>';
 				fetch(`/api/displays/${displayId}/cells`)
 					.then(response => response.json())
@@ -118,14 +161,88 @@
 					});
 			}
 
+			function updateCell(displayId, cellCode, newCarrinhoCode, cellDiv, inputElement, originalValue) {
+				const requestBody = { displayId, cellCode, newCarrinhoCode };
+
+				fetch('/api/displays/cells/update', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(requestBody)
+				})
+				.then(response => {
+					if (response.ok) {
+						cellDiv.classList.add('update-success');
+						if (newCarrinhoCode) {
+							cellDiv.classList.add('occupied');
+						} else {
+							cellDiv.classList.remove('occupied');
+						}
+						// Refetch the grid to get the latest stats and data
+						fetchCells(currentDisplayId);
+					} else {
+						throw new Error('Código não encontrado ou inválido.');
+					}
+				})
+				.catch(error => {
+					inputElement.value = originalValue;
+					cellDiv.classList.add('update-error');
+					Swal.fire('Erro!', error.message, 'error');
+				})
+				.finally(() => {
+					setTimeout(() => {
+						cellDiv.classList.remove('update-success', 'update-error');
+					}, 1000); // Remove visual feedback after 1 second
+				});
+			}
+
+			function renderAutocompleteResults(results, inputElement, cellDiv) {
+				const existingResults = cellDiv.querySelector('.autocomplete-results');
+				if (existingResults) { existingResults.remove(); }
+				if (results.length === 0) { return; }
+
+				const resultsContainer = document.createElement('div');
+				resultsContainer.className = 'autocomplete-results';
+
+				results.forEach(result => {
+					const item = document.createElement('div');
+					item.className = 'autocomplete-item';
+					item.innerHTML = `<b>${result.codigo}</b> - ${result.descricao}`;
+					item.addEventListener('mousedown', function() {
+						inputElement.value = result.codigo;
+						resultsContainer.remove();
+						// Trigger blur to save
+						inputElement.blur();
+					});
+					resultsContainer.appendChild(item);
+				});
+				cellDiv.appendChild(resultsContainer);
+			}
+
+			function handleAutocomplete(event) {
+				const input = event.target;
+				const cellDiv = input.parentElement;
+				const value = input.value;
+
+				const existingResults = cellDiv.querySelector('.autocomplete-results');
+				if (existingResults && !value) {
+					existingResults.remove();
+					return;
+				}
+				if (value.length < 2) { return; }
+
+				fetch(`/carrinho/autocomplete/${value}`)
+					.then(response => response.json())
+					.then(data => {
+						renderAutocompleteResults(data, input, cellDiv);
+					});
+			}
+
 			function renderGrid(cells) {
 				displayGridContainer.innerHTML = '';
 				const grid = document.createElement('div');
 				grid.className = 'grid-container';
 
-				// Create a map for quick lookup
 				const cellMap = new Map(cells.map(cell => [cell.cellCode, cell]));
-
 				const rows = "ABCDEFGHIJKLMNO".split('');
 				const cols = [1, 2, 3, 4, 5];
 				let occupiedCount = 0;
@@ -146,8 +263,7 @@
 						input.type = 'text';
 						input.id = `cellInput_${cellCode}`;
 						input.setAttribute('data-cell-code', cellCode);
-						input.readOnly = true; // For now, as requested
-						input.maxLength = 10; // Approximately 10 characters
+						input.maxLength = 10;
 
 						if (cellData && cellData.carrinho) {
 							input.value = cellData.carrinho.codigo;
@@ -156,8 +272,29 @@
 						} else {
 							input.value = '';
 						}
-						grid.appendChild(cellDiv);
+
+						input.addEventListener('focus', function() {
+							cellDiv.classList.add('focused');
+							input.setAttribute('data-original-value', input.value);
+						});
+						input.addEventListener('input', handleAutocomplete);
+						input.addEventListener('blur', function() {
+							cellDiv.classList.remove('focused');
+							setTimeout(() => {
+								const existingResults = cellDiv.querySelector('.autocomplete-results');
+								if (existingResults) { existingResults.remove(); }
+								
+								const originalValue = input.getAttribute('data-original-value') || '';
+								const newValue = input.value.trim().toUpperCase();
+
+								if (originalValue.toUpperCase() !== newValue) {
+									updateCell(currentDisplayId, cellCode, newValue, cellDiv, input, originalValue);
+								}
+							}, 150);
+						});
+
 						cellDiv.appendChild(input);
+						grid.appendChild(cellDiv);
 					});
 				});
 
@@ -179,13 +316,11 @@
 					button.setAttribute('data-display-id', display.id);
 					
 					button.addEventListener('click', function() {
-						// Remove active state from all buttons
 						const allButtons = displayButtonsContainer.querySelectorAll('button');
 						allButtons.forEach(btn => {
 							btn.classList.remove('btn-primary');
 							btn.classList.add('btn-default');
 						});
-						// Add active state to the clicked button
 						this.classList.add('btn-primary');
 						this.classList.remove('btn-default');
 						
@@ -196,8 +331,12 @@
 				displayButtonsContainer.appendChild(buttonGroup);
 			}
 
-			// Initial load
 			fetchDisplays();
+
+			$('#logout-link').on('click', function(e) {
+				e.preventDefault();
+				$('#logout-form').submit();
+			});
 		});
 	</script>
 </body>

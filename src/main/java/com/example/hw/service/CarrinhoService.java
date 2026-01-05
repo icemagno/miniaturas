@@ -6,6 +6,7 @@ import com.example.hw.model.CarrinhoCheckResponseDTO;
 import com.example.hw.model.CarrinhoListDTO;
 import com.example.hw.repository.CarrinhoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -47,6 +48,10 @@ public class CarrinhoService {
 
     public List<CarrinhoListDTO> getCarrinhoByCodigo(String codigo) {
         return carrinhoRepository.findByCodigo(codigo);
+    }
+
+    public List<CarrinhoListDTO> findByCodigoStartsWith(String code) {
+        return carrinhoRepository.findByCodigoStartsWith(code, PageRequest.of(0, 5));
     }
 
     public List<Carrinho> findFullCarrinhoByCodigo(String codigo) {

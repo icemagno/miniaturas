@@ -2,6 +2,7 @@ package com.example.hw.repository;
 
 import com.example.hw.model.Carrinho;
 import com.example.hw.model.CarrinhoListDTO;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -14,6 +15,9 @@ public interface CarrinhoRepository extends JpaRepository<Carrinho, Long> {
     
     @Query("SELECT new com.example.hw.model.CarrinhoListDTO(c.id, c.codigo, c.descricao, c.checked) FROM Carrinho c WHERE c.codigo = :codigo")
     List<CarrinhoListDTO> findByCodigo(@Param("codigo") String codigo);
+
+    @Query("SELECT new com.example.hw.model.CarrinhoListDTO(c.id, c.codigo, c.descricao, c.checked) FROM Carrinho c WHERE upper(c.codigo) LIKE upper(concat(:code, '%')) ORDER BY c.codigo ASC")
+    List<CarrinhoListDTO> findByCodigoStartsWith(@Param("code") String code, Pageable pageable);
 
     List<Carrinho> findFullCarrinhoByCodigo(String codigo);
     

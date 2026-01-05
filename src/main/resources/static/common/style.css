@@ -184,3 +184,7 @@ body {
     flex-wrap: wrap;
     align-items: flex-start;
 }
+
+.navbar-custom-menu .navbar-nav > li > .btn {
+    border-left: none !important;
+}

@@ -6,13 +6,17 @@
         <div class="navbar-custom-menu">
             <ul class="nav navbar-nav">
                 <li>
-                    <form th:action="@{/logout}" method="post" style="display: inline;">
-                        <button type="submit" class="btn btn-link navbar-btn" style="color: white;">
-                            <i class="fa fa-sign-out"></i> Sair
-                        </button>
-                    </form>
+                    <a href="/" class="btn btn-link navbar-btn" style="color: white;" title="Início">
+                        <i class="fa fa-home"></i>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" id="logout-link" class="btn btn-link navbar-btn" style="color: white;" title="Sair">
+                        <i class="fa fa-sign-out"></i>
+                    </a>
                 </li>
             </ul>
         </div>
+        <form th:action="@{/logout}" method="post" id="logout-form" style="display: none;"></form>
     </div>
 </nav>

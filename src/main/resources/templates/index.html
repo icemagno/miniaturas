@@ -779,6 +779,11 @@
 
 			// Initial load
 			fetchInitialList();
+
+			$('#logout-link').on('click', function(e) {
+				e.preventDefault();
+				$('#logout-form').submit();
+			});
 		});
 	</script>
 </body>

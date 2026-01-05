@@ -33,9 +33,6 @@
 		                          <h4>Últimos 5 checados:</h4>
 		                          <ul id="lastCheckedList" class="list-group">
 		                          </ul>
-		                          <div class="text-right" style="margin-top: 20px;">
-		                            <a href="/" class="btn btn-default">Voltar para o Início</a>
-		                          </div>
 		                        </div>		          </div>
 		        </div>
 		      </div>
@@ -153,6 +150,11 @@
 						});
 					}
 				})
+			});
+
+			$('#logout-link').on('click', function(e) {
+				e.preventDefault();
+				$('#logout-form').submit();
 			});
 		});
 	</script>

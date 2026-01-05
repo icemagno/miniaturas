@@ -78,6 +78,11 @@ public class CarrinhoController {
         return carrinhoService.getCarrinhoByCodigo(codigo);
     }
 
+    @GetMapping(value = "/autocomplete/{code}", produces = {MediaType.APPLICATION_JSON_VALUE})
+    public @ResponseBody List<CarrinhoListDTO> autocompleteByCode(@PathVariable String code) {
+        return carrinhoService.findByCodigoStartsWith(code);
+    }
+
     @GetMapping(value = "/search/{searchTerm}", produces = {MediaType.APPLICATION_JSON_VALUE})
     public @ResponseBody List<CarrinhoListDTO> unifiedSearch(@PathVariable String searchTerm) {
         return carrinhoService.findByCodigoOrDescricao(searchTerm);
