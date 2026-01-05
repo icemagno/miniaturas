@@ -188,3 +188,32 @@ body {
 .navbar-custom-menu .navbar-nav > li > .btn {
     border-left: none !important;
 }
+
+/* Custom styles to reduce header height */
+.main-header .navbar {
+    min-height: 40px;
+}
+
+.main-header .navbar .navbar-header {
+    padding-top: 0;
+    padding-bottom: 0;
+    height: 40px; /* Ensure header takes new height */
+}
+
+.main-header .navbar .navbar-header h4 {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 40px; /* Center text vertically */
+    font-size: 15px; /* Adjust font size to fit */
+}
+
+.navbar-custom-menu .navbar-nav > li > a.btn { /* Target the actual buttons */
+    padding-top: 10px; /* Adjust padding to center icon */
+    padding-bottom: 10px;
+}
+
+.navbar-custom-menu .navbar-nav > li > form > button.btn { /* Target the actual buttons */
+    padding-top: 10px; /* Adjust padding to center icon */
+    padding-bottom: 10px;
+}
+

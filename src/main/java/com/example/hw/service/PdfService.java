@@ -3,6 +3,8 @@ package com.example.hw.service;
 import com.example.hw.model.Carrinho;
 import com.example.hw.model.Display;
 import com.example.hw.model.DisplayCell;
+import com.example.hw.model.DisplayCellDTO;
+import com.example.hw.repository.DisplayCellRepository;
 import com.example.hw.repository.DisplayRepository;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -35,45 +37,48 @@ public class PdfService {
     @Autowired
     private DisplayRepository displayRepository;
 
+    @Autowired
+    private DisplayCellRepository displayCellRepository;
+
     public byte[] createDisplayPdf(Long displayId) {
         Optional<Display> displayOptional = displayRepository.findById(displayId);
         if (displayOptional.isEmpty()) {
             return new byte[0];
         }
         Display display = displayOptional.get();
+        List<DisplayCellDTO> cells = displayCellRepository.findProjectedByDisplayId(displayId);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (Document document = new Document(PageSize.A4)) {
             PdfWriter.getInstance(document, out);
             document.open();
 
-            Font titleFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 16);
+            Font titleFont = FontFactory.getFont(FontFactory.COURIER_BOLD, 16, Color.BLACK);
             document.add(new Paragraph("Expositor: " + display.getDisplayCode(), titleFont));
             document.add(new Paragraph("\n"));
 
             PdfPTable table = new PdfPTable(5);
             table.setWidthPercentage(100);
 
-            Map<String, DisplayCell> cellMap = display.getCells().stream()
-                    .collect(Collectors.toMap(DisplayCell::getCellCode, Function.identity()));
+            Map<String, DisplayCellDTO> cellMap = cells.stream()
+                    .collect(Collectors.toMap(DisplayCellDTO::getCellCode, Function.identity()));
 
             char[] rows = "ABCDEFGHIJKLMNO".toCharArray();
             for (char row : rows) {
                 for (int col = 1; col <= 5; col++) {
                     String cellCode = row + String.valueOf(col);
-                    DisplayCell displayCell = cellMap.get(cellCode);
+                    DisplayCellDTO displayCell = cellMap.get(cellCode);
 
                     PdfPCell cell = new PdfPCell();
-                    cell.setFixedHeight(45f);
+                    cell.setFixedHeight(30f);
                     cell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
                     cell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 
                     if (displayCell != null && displayCell.getCarrinho() != null) {
-                        Font mainFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 10);
+                        Font mainFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 8, Color.BLACK);
                         cell.setPhrase(new Phrase(displayCell.getCarrinho().getCodigo(), mainFont));
-                        cell.setBackgroundColor(new Color(223, 240, 216)); // #dff0d8
                     } else {
-                        Font placeholderFont = FontFactory.getFont(FontFactory.HELVETICA, 8, Color.LIGHT_GRAY);
+                        Font placeholderFont = FontFactory.getFont(FontFactory.HELVETICA, 6, Color.BLACK);
                         cell.setPhrase(new Phrase(cellCode, placeholderFont));
                     }
                     table.addCell(cell);

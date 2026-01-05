@@ -77,6 +77,23 @@
 		.autocomplete-item:hover {
 			background-color: #f0f0f0;
 		}
+		.cell-spinner {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 20px;
+			height: 20px;
+			border: 2px solid #f3f3f3;
+			border-top: 2px solid #3498db;
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+			z-index: 10;
+		}
+		@keyframes spin {
+			0% { transform: translate(-50%, -50%) rotate(0deg); }
+			100% { transform: translate(-50%, -50%) rotate(360deg); }
+		}
 	</style>
 </head>
 
@@ -161,8 +178,23 @@
 					});
 			}
 
+			function updateOccupancyCount() {
+				const grid = displayGridContainer.querySelector('.grid-container');
+				if (!grid) return;
+
+				const totalCells = grid.children.length;
+				const occupiedCount = grid.querySelectorAll('.grid-cell.occupied').length;
+				const freeCells = totalCells - occupiedCount;
+				displayFooter.textContent = `Exibindo ${totalCells} células. Ocupadas: ${occupiedCount}. Livres: ${freeCells}.`;
+			}
+
 			function updateCell(displayId, cellCode, newCarrinhoCode, cellDiv, inputElement, originalValue) {
 				const requestBody = { displayId, cellCode, newCarrinhoCode };
+
+				const spinner = document.createElement('div');
+				spinner.className = 'cell-spinner';
+				cellDiv.appendChild(spinner);
+				inputElement.style.visibility = 'hidden';
 
 				fetch('/api/displays/cells/update', {
 					method: 'POST',
@@ -170,28 +202,59 @@
 					body: JSON.stringify(requestBody)
 				})
 				.then(response => {
-					if (response.ok) {
-						cellDiv.classList.add('update-success');
-						if (newCarrinhoCode) {
-							cellDiv.classList.add('occupied');
-						} else {
-							cellDiv.classList.remove('occupied');
+					return response.json().then(body => ({
+						ok: response.ok,
+						status: response.status,
+						body: body
+					})).catch(() => ({
+						ok: false,
+						status: response.status,
+						body: { message: 'Não foi possível ler a resposta do servidor.' }
+					}));
+				})
+				.then(result => {
+					if (result.ok) {
+						if (result.body.status === 'SUCCESS') {
+							cellDiv.classList.add('update-success');
+							if (newCarrinhoCode) {
+								cellDiv.classList.add('occupied');
+							} else {
+								cellDiv.classList.remove('occupied');
+							}
+							inputElement.setAttribute('data-original-value', newCarrinhoCode);
+							updateOccupancyCount();
+						} else if (result.body.status === 'ALREADY_CHECKED') {
+							cellDiv.classList.add('update-error');
+							let alertMessage = result.body.message;
+							if (result.body.currentDisplayCode && result.body.currentCellCode) {
+								alertMessage = `Esta miniatura já está no expositor ${result.body.currentDisplayCode}, célula ${result.body.currentCellCode}.`;
+							}
+							Swal.fire('Aviso!', alertMessage, 'warning');
+							inputElement.value = originalValue;
+							if (originalValue) {
+								cellDiv.classList.add('occupied');
+							} else {
+								cellDiv.classList.remove('occupied');
+							}
+							updateOccupancyCount();
 						}
-						// Refetch the grid to get the latest stats and data
-						fetchCells(currentDisplayId);
 					} else {
-						throw new Error('Código não encontrado ou inválido.');
+						throw new Error(result.body.message || 'Ocorreu um erro desconhecido.');
 					}
 				})
 				.catch(error => {
+					console.error('Falha ao atualizar a célula:', error);
 					inputElement.value = originalValue;
 					cellDiv.classList.add('update-error');
-					Swal.fire('Erro!', error.message, 'error');
+					const errorMessage = error && error.message ? error.message : 'Não foi possível processar a sua requisição.';
+					Swal.fire('Erro!', errorMessage, 'error');
 				})
 				.finally(() => {
+					cellDiv.removeChild(spinner);
+					inputElement.style.visibility = 'visible';
 					setTimeout(() => {
 						cellDiv.classList.remove('update-success', 'update-error');
-					}, 1000); // Remove visual feedback after 1 second
+					}, 1000);
 				});
 			}
 
@@ -210,7 +273,6 @@
 					item.addEventListener('mousedown', function() {
 						inputElement.value = result.codigo;
 						resultsContainer.remove();
-						// Trigger blur to save
 						inputElement.blur();
 					});
 					resultsContainer.appendChild(item);
@@ -245,8 +307,7 @@
 				const cellMap = new Map(cells.map(cell => [cell.cellCode, cell]));
 				const rows = "ABCDEFGHIJKLMNO".split('');
 				const cols = [1, 2, 3, 4, 5];
-				let occupiedCount = 0;
-
+				
 				rows.forEach(row => {
 					cols.forEach(col => {
 						const cellCode = `${row}${col}`;
@@ -268,7 +329,6 @@
 						if (cellData && cellData.carrinho) {
 							input.value = cellData.carrinho.codigo;
 							cellDiv.classList.add('occupied');
-							occupiedCount++;
 						} else {
 							input.value = '';
 						}
@@ -299,8 +359,7 @@
 				});
 
 				displayGridContainer.appendChild(grid);
-				const totalCells = rows.length * cols.length;
-				displayFooter.textContent = `Exibindo ${totalCells} células. Ocupadas: ${occupiedCount}. Livres: ${totalCells - occupiedCount}.`;
+				updateOccupancyCount();
 			}
 
 			function renderDisplayButtons(displays) {

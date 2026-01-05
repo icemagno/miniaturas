@@ -1,9 +1,6 @@
 package com.example.hw.service;
 
-import com.example.hw.model.Carrinho;
-import com.example.hw.model.DisplayCell;
-import com.example.hw.model.DisplayCellDTO;
-import com.example.hw.model.UpdateCellRequestDTO;
+import com.example.hw.model.*;
 import com.example.hw.repository.CarrinhoRepository;
 import com.example.hw.repository.DisplayCellRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,16 +21,14 @@ public class DisplayService {
     private CarrinhoRepository carrinhoRepository;
 
     public List<DisplayCellDTO> findCellsByDisplayId(Long displayId) {
-        return displayCellRepository.findByDisplayId(displayId).stream()
-                .map(cell -> new DisplayCellDTO(cell.getId(), cell.getCellCode(), cell.getCarrinho()))
-                .collect(Collectors.toList());
+        return displayCellRepository.findProjectedByDisplayId(displayId);
     }
 
     @Transactional
-    public boolean updateCell(UpdateCellRequestDTO request) {
+    public UpdateCellResponseDTO updateCell(UpdateCellRequestDTO request) {
         Optional<DisplayCell> cellOptional = displayCellRepository.findByDisplayIdAndCellCode(request.getDisplayId(), request.getCellCode());
         if (cellOptional.isEmpty()) {
-            return false; // Cell not found
+            return new UpdateCellResponseDTO("ERROR", "Célula não encontrada.");
         }
 
         DisplayCell cell = cellOptional.get();
@@ -48,16 +43,36 @@ public class DisplayService {
             }
             cell.setCarrinho(null);
             displayCellRepository.save(cell);
-            return true;
+            return new UpdateCellResponseDTO("SUCCESS", "Célula esvaziada.");
         }
 
         // Case 2: A new code is provided
         List<Carrinho> carrinhos = carrinhoRepository.findFullCarrinhoByCodigo(newCode);
         if (carrinhos.isEmpty()) {
-            return false; // Carrinho with the new code not found
+            return new UpdateCellResponseDTO("ERROR", "Miniatura com o código '" + newCode + "' não encontrada.");
         }
         Carrinho newCarrinho = carrinhos.get(0);
-
+        
+        // If the new carrinho is already checked, abort and notify
+        if (newCarrinho.getChecked() != null && newCarrinho.getChecked()) {
+            // Also ensure it's not the same carrinho already in this cell
+            if (originalCarrinho != null && originalCarrinho.getId().equals(newCarrinho.getId())) {
+                // If it's the same carrinho, and it's already checked, just return SUCCESS
+                return new UpdateCellResponseDTO("SUCCESS", "Miniatura '" + newCode + "' já está nesta célula e checada.");
+            }
+            // Find the cell where this carrinho is currently displayed
+            Optional<DisplayCell> occupiedCellOptional = displayCellRepository.findByCarrinhoId(newCarrinho.getId());
+            if (occupiedCellOptional.isPresent()) {
+                DisplayCell occupiedCell = occupiedCellOptional.get();
+                String displayCode = occupiedCell.getDisplay().getDisplayCode();
+                String cellCode = occupiedCell.getCellCode();
+                return new UpdateCellResponseDTO("ALREADY_CHECKED", "Esta miniatura já está em exposição.", displayCode, cellCode);
+            } else {
+                // This case should ideally not happen if checked==true, but as a fallback:
+                return new UpdateCellResponseDTO("ALREADY_CHECKED", "Esta miniatura já está marcada como em exposição, mas não foi possível encontrar a sua célula.", null, null);
+            }
+        }
+        
         // If the cell had a different carrinho, uncheck it
         if (originalCarrinho != null && !originalCarrinho.getId().equals(newCarrinho.getId())) {
             originalCarrinho.setChecked(false);
@@ -70,6 +85,7 @@ public class DisplayService {
         
         cell.setCarrinho(newCarrinho);
         displayCellRepository.save(cell);
-        return true;
+        
+        return new UpdateCellResponseDTO("SUCCESS", "Célula atualizada com sucesso.");
     }
 }

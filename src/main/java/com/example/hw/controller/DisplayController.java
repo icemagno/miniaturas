@@ -1,8 +1,6 @@
 package com.example.hw.controller;
 
-import com.example.hw.model.DisplayCellDTO;
-import com.example.hw.model.DisplayDTO;
-import com.example.hw.model.UpdateCellRequestDTO;
+import com.example.hw.model.*;
 import com.example.hw.repository.DisplayRepository;
 import com.example.hw.service.DisplayService;
 import com.example.hw.service.PdfService;
@@ -40,13 +38,12 @@ public class DisplayController {
     }
 
     @PostMapping("/cells/update")
-    public ResponseEntity<Void> updateCell(@RequestBody UpdateCellRequestDTO request) {
-        boolean success = displayService.updateCell(request);
-        if (success) {
-            return ResponseEntity.ok().build();
-        } else {
-            return ResponseEntity.badRequest().build(); // Or another appropriate error response
+    public ResponseEntity<UpdateCellResponseDTO> updateCell(@RequestBody UpdateCellRequestDTO request) {
+        UpdateCellResponseDTO response = displayService.updateCell(request);
+        if ("ERROR".equals(response.getStatus())) {
+            return ResponseEntity.badRequest().body(response);
         }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{displayId}/export/pdf")

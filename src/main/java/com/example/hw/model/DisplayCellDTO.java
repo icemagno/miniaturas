@@ -15,6 +15,16 @@ public class DisplayCellDTO {
         }
     }
 
+    public DisplayCellDTO(Long id, String cellCode, Long carrinhoId, String carrinhoCodigo, String carrinhoDescricao) {
+        this.id = id;
+        this.cellCode = cellCode;
+        if (carrinhoId != null) {
+            this.carrinho = new CarrinhoInCellDTO(carrinhoId, carrinhoCodigo, carrinhoDescricao);
+        } else {
+            this.carrinho = null;
+        }
+    }
+
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
