@@ -2,6 +2,7 @@ package com.example.hw.service;
 
 import com.example.hw.model.Carrinho;
 import com.example.hw.model.CarrinhoDetailDTO;
+import com.example.hw.model.CarrinhoCheckResponseDTO;
 import com.example.hw.model.CarrinhoListDTO;
 import com.example.hw.repository.CarrinhoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,14 +69,19 @@ public class CarrinhoService {
         return carrinhoRepository.count();
     }
 
-    public Optional<CarrinhoListDTO> checkCarrinho(String codigo) {
+    public Optional<CarrinhoCheckResponseDTO> checkCarrinho(String codigo) {
         List<Carrinho> carrinhos = carrinhoRepository.findFullCarrinhoByCodigo(codigo);
         if (!carrinhos.isEmpty()) {
-            // Assuming codigo is unique, so we take the first one
             Carrinho carrinho = carrinhos.get(0);
-            carrinho.setChecked(true);
-            Carrinho savedCarrinho = carrinhoRepository.save(carrinho);
-            return Optional.of(new CarrinhoListDTO(savedCarrinho.getId(), savedCarrinho.getCodigo(), savedCarrinho.getDescricao(), savedCarrinho.getChecked()));
+            boolean alreadyChecked = carrinho.getChecked() != null && carrinho.getChecked();
+            
+            if (!alreadyChecked) {
+                carrinho.setChecked(true);
+                carrinhoRepository.save(carrinho);
+            }
+
+            CarrinhoListDTO dto = new CarrinhoListDTO(carrinho.getId(), carrinho.getCodigo(), carrinho.getDescricao(), carrinho.getChecked());
+            return Optional.of(new CarrinhoCheckResponseDTO(dto, alreadyChecked));
         }
         return Optional.empty();
     }

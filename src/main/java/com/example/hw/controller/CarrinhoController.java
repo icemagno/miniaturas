@@ -1,6 +1,7 @@
 package com.example.hw.controller;
 
 import com.example.hw.model.Carrinho;
+import com.example.hw.model.CarrinhoCheckResponseDTO;
 import com.example.hw.model.CarrinhoDetailDTO;
 import com.example.hw.model.CarrinhoListDTO;
 import com.example.hw.service.CarrinhoService;
@@ -120,7 +121,7 @@ public class CarrinhoController {
     }
 
     @PostMapping("/check/{codigo}")
-    public ResponseEntity<CarrinhoListDTO> checkCarrinho(@PathVariable String codigo) {
+    public ResponseEntity<CarrinhoCheckResponseDTO> checkCarrinho(@PathVariable String codigo) {
         return carrinhoService.checkCarrinho(codigo)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
