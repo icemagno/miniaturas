@@ -9,6 +9,9 @@
 
 **/target/
 
+# Application configuration files
+application.properties
+
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
 
