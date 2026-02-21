@@ -33,6 +33,15 @@ public class Carrinho {
     @jakarta.persistence.OneToOne(mappedBy = "carrinho")
     private DisplayCell displayCell;
 
+    public Carrinho() {}
+
+    public Carrinho(Long id, String codigo, String descricao, CategoriaCarrinho categoria) {
+        this.id = id;
+        this.codigo = codigo;
+        this.descricao = descricao;
+        this.categoria = categoria;
+    }
+
     // getters and setters
 
     public DisplayCell getDisplayCell() {

@@ -57,6 +57,11 @@ public interface CarrinhoRepository extends JpaRepository<Carrinho, Long> {
 
     List<Carrinho> findByCheckedTrue();
 
+    @Query("SELECT new com.example.hw.model.Carrinho(c.id, c.codigo, c.descricao, cat) " +
+           "FROM Carrinho c LEFT JOIN c.categoria cat " +
+           "WHERE c.checked IS NULL OR c.checked = false")
+    List<Carrinho> findUncheckedProjected();
+
     @Modifying
     @Query("UPDATE Carrinho c SET c.checked = false")
     void resetAllChecked();

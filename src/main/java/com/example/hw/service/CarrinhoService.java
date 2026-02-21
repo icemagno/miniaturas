@@ -101,7 +101,7 @@ public class CarrinhoService {
     }
 
     public List<Carrinho> findAllUnchecked() {
-        return carrinhoRepository.findByCheckedIsNullOrCheckedIsFalse();
+        return carrinhoRepository.findUncheckedProjected();
     }
 
     public List<Carrinho> findAllChecked() {

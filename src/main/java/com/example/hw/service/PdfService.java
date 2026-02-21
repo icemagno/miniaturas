@@ -357,8 +357,12 @@ public class PdfService {
 
             Font itemFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
 
-            // Sort alphabetical by description
-            carrinhos.sort((c1, c2) -> c1.getDescricao().compareToIgnoreCase(c2.getDescricao()));
+            // Sort alphabetical by code
+            carrinhos.sort((c1, c2) -> {
+                if (c1.getCodigo() == null) return 1;
+                if (c2.getCodigo() == null) return -1;
+                return c1.getCodigo().compareToIgnoreCase(c2.getCodigo());
+            });
 
             for (Carrinho carrinho : carrinhos) {
                 PdfPCell c1 = new PdfPCell(new Phrase(carrinho.getCodigo(), itemFont));

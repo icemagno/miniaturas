@@ -109,15 +109,24 @@ public class CarrinhoController {
     }
 
     @PostMapping
-    public CarrinhoDetailDTO save(@RequestBody Carrinho carrinho) {
+    public ResponseEntity<?> save(@RequestBody Carrinho carrinho) {
+        if (!carrinhoService.findFullCarrinhoByCodigo(carrinho.getCodigo()).isEmpty()) {
+            return ResponseEntity.badRequest().body("Erro: Já existe uma miniatura cadastrada com o código " + carrinho.getCodigo());
+        }
         Carrinho savedCarrinho = carrinhoService.save(carrinho);
-        return new CarrinhoDetailDTO(savedCarrinho);
+        return ResponseEntity.ok(new CarrinhoDetailDTO(savedCarrinho));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CarrinhoDetailDTO> update(@PathVariable Long id, @RequestBody Carrinho carrinho) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody Carrinho carrinho) {
         return carrinhoService.findById(id)
                 .map(existing -> {
+                    // Check if new code belongs to ANOTHER item
+                    List<Carrinho> conflicting = carrinhoService.findFullCarrinhoByCodigo(carrinho.getCodigo());
+                    if (!conflicting.isEmpty() && !conflicting.get(0).getId().equals(id)) {
+                        return ResponseEntity.badRequest().body("Erro: O código " + carrinho.getCodigo() + " já está sendo usado por outra miniatura.");
+                    }
+                    
                     existing.setCodigo(carrinho.getCodigo());
                     existing.setDescricao(carrinho.getDescricao());
                     existing.setCategoria(carrinho.getCategoria());
