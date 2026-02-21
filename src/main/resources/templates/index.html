@@ -41,6 +41,8 @@
 						<button id="manage-categories-button" class="btn btn-info btn-sm" title="Gerenciar Categorias"><i class="fa fa-cog"></i></button>
 						<a href="/carrinho/export/pdf" class="btn btn-default btn-sm" title="Exportar para PDF"><i class="fa fa-file-pdf-o"></i></a>
 						<a href="/carrinho/export/pdf/pictures" class="btn btn-default btn-sm" title="Exportar PDF com fotos"><i class="fa fa-file-image-o"></i></a>
+						<a href="/carrinho/export/pdf/alphabetical" class="btn btn-default btn-sm" title="Exportar PDF (A-Z)"><i class="fa fa-sort-alpha-asc"></i></a>
+						<a href="/carrinho/export/pdf/unchecked" class="btn btn-default btn-sm" title="Exportar não checados para PDF"><i class="fa fa-list-ul"></i></a>
 						<a href="/check" class="btn btn-success btn-sm" title="Checagem Rápida"><i class="fa fa-check-square-o"></i></a>
 						<a href="/display" class="btn btn-warning btn-sm" title="Expositores"><i class="fa fa-th"></i></a>
 					  </div>
@@ -209,6 +211,16 @@
 						`;
 						detailsContainer.appendChild(checadoRow);
 
+						// Expositor e Célula
+						const expositorRow = document.createElement('div');
+						expositorRow.className = 'row';
+						expositorRow.style.marginTop = '10px';
+						expositorRow.innerHTML = `
+							<div class="col-sm-4"><strong>Expositor / Célula</strong></div>
+							<div class="col-sm-8">${carrinho.displayCode ? carrinho.displayCode + ' - ' + (carrinho.cellCode || 'N/A') : 'N/A'}</div>
+						`;
+						detailsContainer.appendChild(expositorRow);
+
 						detailsCol.appendChild(detailsContainer);
 						
 						row.appendChild(imageCol);
@@ -227,6 +239,7 @@
 					<tr>
 						<th style="width: 80px;">Código</th>
 						<th>Nome</th>
+						<th>Categoria</th>
 						<th style="width: 40px;">Checado</th>
 					</tr>
 				`;
@@ -244,6 +257,9 @@
 					const tdDescricao = document.createElement('td');
 					tdDescricao.textContent = item.descricao;
 
+					const tdCategoria = document.createElement('td');
+					tdCategoria.textContent = item.categoriaNome || '-';
+
 					const tdChecked = document.createElement('td');
 					tdChecked.style.textAlign = 'center';
 					if (item.checked) {
@@ -254,6 +270,7 @@
 					
 					tr.appendChild(tdCodigo);
 					tr.appendChild(tdDescricao);
+					tr.appendChild(tdCategoria);
 					tr.appendChild(tdChecked);
 
 					tr.addEventListener('click', function() {

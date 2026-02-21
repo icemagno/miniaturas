@@ -33,10 +33,20 @@ public class CarrinhoController {
                 .body(pdf);
     }
 
+    @GetMapping("/export/pdf/alphabetical")
+    public ResponseEntity<byte[]> exportPdfAlphabetical() {
+        List<Carrinho> carrinhos = carrinhoService.findAllAlphabetically();
+        byte[] pdf = pdfService.createAlphabeticalPdf(carrinhos);
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=carrinhos-alfabetico.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
     @GetMapping("/export/pdf/unchecked")
     public ResponseEntity<byte[]> exportPdfUnchecked() {
         List<Carrinho> carrinhos = carrinhoService.findAllUnchecked();
-        byte[] pdf = pdfService.createPdf(carrinhos);
+        byte[] pdf = pdfService.createUncheckedPdf(carrinhos);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=carrinhos-nao-checados.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
@@ -107,10 +117,14 @@ public class CarrinhoController {
     @PutMapping("/{id}")
     public ResponseEntity<CarrinhoDetailDTO> update(@PathVariable Long id, @RequestBody Carrinho carrinho) {
         return carrinhoService.findById(id)
-                .map(existingCarrinho -> {
-                    carrinho.setId(id);
-                    Carrinho savedCarrinho = carrinhoService.save(carrinho);
-                    return ResponseEntity.ok(new CarrinhoDetailDTO(savedCarrinho));
+                .map(existing -> {
+                    existing.setCodigo(carrinho.getCodigo());
+                    existing.setDescricao(carrinho.getDescricao());
+                    existing.setCategoria(carrinho.getCategoria());
+                    existing.setChecked(carrinho.getChecked());
+                    existing.setImagem(carrinho.getImagem());
+                    Carrinho saved = carrinhoService.save(existing);
+                    return ResponseEntity.ok(new CarrinhoDetailDTO(saved));
                 })
                 .orElse(ResponseEntity.notFound().build());
     }

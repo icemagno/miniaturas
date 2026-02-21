@@ -7,6 +7,8 @@ public class CarrinhoDetailDTO {
     private CategoriaCarrinho categoria;
     private String imagem;
     private Boolean checked;
+    private String displayCode;
+    private String cellCode;
 
     public CarrinhoDetailDTO(Carrinho carrinho) {
         this.id = carrinho.getId();
@@ -15,9 +17,31 @@ public class CarrinhoDetailDTO {
         this.categoria = carrinho.getCategoria();
         this.imagem = carrinho.getImagem();
         this.checked = carrinho.getChecked();
+        if (carrinho.getDisplayCell() != null) {
+            this.cellCode = carrinho.getDisplayCell().getCellCode();
+            if (carrinho.getDisplayCell().getDisplay() != null) {
+                this.displayCode = carrinho.getDisplayCell().getDisplay().getDisplayCode();
+            }
+        }
     }
 
     // Getters and setters
+
+    public String getDisplayCode() {
+        return displayCode;
+    }
+
+    public void setDisplayCode(String displayCode) {
+        this.displayCode = displayCode;
+    }
+
+    public String getCellCode() {
+        return cellCode;
+    }
+
+    public void setCellCode(String cellCode) {
+        this.cellCode = cellCode;
+    }
 
     public Boolean getChecked() {
         return checked;

@@ -22,6 +22,10 @@ public class CarrinhoService {
         return carrinhoRepository.findAll();
     }
 
+    public List<Carrinho> findAllAlphabetically() {
+        return carrinhoRepository.findAllByOrderByDescricaoAsc();
+    }
+
     public List<CarrinhoListDTO> findAllProjectedBy() {
         return carrinhoRepository.findAllProjectedBy();
     }
@@ -63,7 +67,7 @@ public class CarrinhoService {
     }
 
     public List<CarrinhoListDTO> findFirst10ByOrderByDescricaoAsc() {
-        return carrinhoRepository.findFirst10ByOrderByDescricaoAsc();
+        return carrinhoRepository.findFirst10ByOrderByDescricaoAsc(PageRequest.of(0, 10));
     }
 
     public List<CarrinhoListDTO> findByCodigoOrDescricao(String searchTerm) {
@@ -85,7 +89,12 @@ public class CarrinhoService {
                 carrinhoRepository.save(carrinho);
             }
 
-            CarrinhoListDTO dto = new CarrinhoListDTO(carrinho.getId(), carrinho.getCodigo(), carrinho.getDescricao(), carrinho.getChecked());
+            String dCode = (carrinho.getDisplayCell() != null && carrinho.getDisplayCell().getDisplay() != null) ? 
+                          carrinho.getDisplayCell().getDisplay().getDisplayCode() : null;
+            String cCode = (carrinho.getDisplayCell() != null) ? carrinho.getDisplayCell().getCellCode() : null;
+            String catNome = (carrinho.getCategoria() != null) ? carrinho.getCategoria().getNome() : null;
+
+            CarrinhoListDTO dto = new CarrinhoListDTO(carrinho.getId(), carrinho.getCodigo(), carrinho.getDescricao(), catNome, carrinho.getChecked(), dCode, cCode);
             return Optional.of(new CarrinhoCheckResponseDTO(dto, alreadyChecked));
         }
         return Optional.empty();

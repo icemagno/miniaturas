@@ -30,7 +30,18 @@ public class Carrinho {
 
     private Boolean checked;
 
+    @jakarta.persistence.OneToOne(mappedBy = "carrinho")
+    private DisplayCell displayCell;
+
     // getters and setters
+
+    public DisplayCell getDisplayCell() {
+        return displayCell;
+    }
+
+    public void setDisplayCell(DisplayCell displayCell) {
+        this.displayCell = displayCell;
+    }
 
     public Boolean getChecked() {
         return checked;

@@ -84,6 +84,7 @@ public class DisplayService {
         carrinhoRepository.save(newCarrinho);
         
         cell.setCarrinho(newCarrinho);
+        newCarrinho.setDisplayCell(cell); // Set the inverse side
         displayCellRepository.save(cell);
         
         return new UpdateCellResponseDTO("SUCCESS", "Célula atualizada com sucesso.");

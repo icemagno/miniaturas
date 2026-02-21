@@ -4,13 +4,15 @@
 # Log file
 *.log
 
+# Backup and Private scripts
+src/main/java/com/example/hw/service/BackupService.java
+*.sql
+*.ps1
+
 # BlueJ files
 *.ctxt
 
 **/target/
-
-# Application configuration files
-application.properties
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
