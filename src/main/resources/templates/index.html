@@ -43,7 +43,6 @@
 						<a href="/carrinho/export/pdf/pictures" class="btn btn-default btn-sm" title="Exportar PDF com fotos"><i class="fa fa-file-image-o"></i></a>
 						<a href="/carrinho/export/pdf/alphabetical" class="btn btn-default btn-sm" title="Exportar PDF (A-Z)"><i class="fa fa-sort-alpha-asc"></i></a>
 						<a href="/carrinho/export/pdf/unchecked" class="btn btn-default btn-sm" title="Exportar não checados para PDF"><i class="fa fa-list-ul"></i></a>
-						<a href="/api/backup/sql" class="btn btn-info btn-sm" title="Backup SQL"><i class="fa fa-database"></i></a>
 						<a href="/check" class="btn btn-success btn-sm" title="Checagem Rápida"><i class="fa fa-check-square-o"></i></a>
 						<a href="/display" class="btn btn-warning btn-sm" title="Expositores"><i class="fa fa-th"></i></a>
 					  </div>
@@ -240,8 +239,6 @@
 					<tr>
 						<th style="width: 80px;">Código</th>
 						<th>Nome</th>
-						<th>Categoria</th>
-						<th style="width: 40px;">Checado</th>
 					</tr>
 				`;
 				table.appendChild(thead);
@@ -258,21 +255,8 @@
 					const tdDescricao = document.createElement('td');
 					tdDescricao.textContent = item.descricao;
 
-					const tdCategoria = document.createElement('td');
-					tdCategoria.textContent = item.categoriaNome || '-';
-
-					const tdChecked = document.createElement('td');
-					tdChecked.style.textAlign = 'center';
-					if (item.checked) {
-						const icon = document.createElement('i');
-						icon.className = 'fa fa-check text-success';
-						tdChecked.appendChild(icon);
-					}
-					
 					tr.appendChild(tdCodigo);
 					tr.appendChild(tdDescricao);
-					tr.appendChild(tdCategoria);
-					tr.appendChild(tdChecked);
 
 					tr.addEventListener('click', function() {
 						showDetails(this.getAttribute('data-id'));

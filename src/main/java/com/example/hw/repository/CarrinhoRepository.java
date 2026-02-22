@@ -39,7 +39,9 @@ public interface CarrinhoRepository extends JpaRepository<Carrinho, Long> {
 
     @Query("SELECT new com.example.hw.model.CarrinhoListDTO(c.id, c.codigo, c.descricao, cat.nome, c.checked, d.displayCode, dc.cellCode) " +
            "FROM Carrinho c LEFT JOIN c.categoria cat LEFT JOIN c.displayCell dc LEFT JOIN dc.display d " +
-           "WHERE upper(c.descricao) LIKE upper(concat('%', :searchTerm, '%')) OR upper(c.codigo) LIKE upper(concat('%', :searchTerm, '%')) " +
+           "WHERE upper(c.descricao) LIKE upper(concat('%', :searchTerm, '%')) " +
+           "OR upper(c.codigo) LIKE upper(concat('%', :searchTerm, '%')) " +
+           "OR upper(cat.nome) LIKE upper(concat('%', :searchTerm, '%')) " +
            "ORDER BY c.descricao ASC")
     List<CarrinhoListDTO> findByCodigoOrDescricao(@Param("searchTerm") String searchTerm);
 
@@ -57,10 +59,14 @@ public interface CarrinhoRepository extends JpaRepository<Carrinho, Long> {
 
     List<Carrinho> findByCheckedTrue();
 
-    @Query("SELECT new com.example.hw.model.Carrinho(c.id, c.codigo, c.descricao, cat) " +
-           "FROM Carrinho c LEFT JOIN c.categoria cat " +
+    @Query("SELECT new com.example.hw.model.Carrinho(c.id, c.codigo, c.descricao, cat, d.displayCode, dc.cellCode) " +
+           "FROM Carrinho c LEFT JOIN c.categoria cat LEFT JOIN c.displayCell dc LEFT JOIN dc.display d " +
            "WHERE c.checked IS NULL OR c.checked = false")
     List<Carrinho> findUncheckedProjected();
+
+    @Query("SELECT new com.example.hw.model.Carrinho(c.id, c.codigo, c.descricao, cat, d.displayCode, dc.cellCode) " +
+           "FROM Carrinho c LEFT JOIN c.categoria cat LEFT JOIN c.displayCell dc LEFT JOIN dc.display d")
+    List<Carrinho> findProjectedAll();
 
     @Modifying
     @Query("UPDATE Carrinho c SET c.checked = false")

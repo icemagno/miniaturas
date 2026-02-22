@@ -165,6 +165,13 @@ public class PdfService {
                 category.setSpacingAfter(5f);
                 document.add(category);
 
+                List<Carrinho> sortedItems = entry.getValue();
+                sortedItems.sort((c1, c2) -> {
+                    if (c1.getDescricao() == null) return 1;
+                    if (c2.getDescricao() == null) return -1;
+                    return c1.getDescricao().compareToIgnoreCase(c2.getDescricao());
+                });
+
                 PdfPTable table = new PdfPTable(new float[]{3, 8, 3, 2});
                 table.setWidthPercentage(100);
 
@@ -195,13 +202,12 @@ public class PdfService {
                     PdfPCell c2 = new PdfPCell(new Phrase(carrinho.getDescricao(), itemFont));
                     table.addCell(c2);
 
-                    String disp = (carrinho.getDisplayCell() != null && carrinho.getDisplayCell().getDisplay() != null) 
-                                    ? carrinho.getDisplayCell().getDisplay().getDisplayCode() : "-";
+                    String disp = (carrinho.getDisplayCode() != null) ? carrinho.getDisplayCode() : "-";
                     PdfPCell c3 = new PdfPCell(new Phrase(disp, itemFont));
                     c3.setHorizontalAlignment(Element.ALIGN_CENTER);
                     table.addCell(c3);
 
-                    String cell = (carrinho.getDisplayCell() != null) ? carrinho.getDisplayCell().getCellCode() : "-";
+                    String cell = (carrinho.getCellCode() != null) ? carrinho.getCellCode() : "-";
                     PdfPCell c4 = new PdfPCell(new Phrase(cell, itemFont));
                     c4.setHorizontalAlignment(Element.ALIGN_CENTER);
                     table.addCell(c4);
@@ -251,6 +257,13 @@ public class PdfService {
 
             Font itemFont = FontFactory.getFont(FontFactory.HELVETICA, 9);
 
+            // Sort alphabetical by description
+            carrinhos.sort((c1, c2) -> {
+                if (c1.getDescricao() == null) return 1;
+                if (c2.getDescricao() == null) return -1;
+                return c1.getDescricao().compareToIgnoreCase(c2.getDescricao());
+            });
+
             for (Carrinho carrinho : carrinhos) {
                 PdfPCell c1 = new PdfPCell(new Phrase(carrinho.getCodigo(), itemFont));
                 table.addCell(c1);
@@ -258,13 +271,12 @@ public class PdfService {
                 PdfPCell c2 = new PdfPCell(new Phrase(carrinho.getDescricao(), itemFont));
                 table.addCell(c2);
 
-                String disp = (carrinho.getDisplayCell() != null && carrinho.getDisplayCell().getDisplay() != null) 
-                                ? carrinho.getDisplayCell().getDisplay().getDisplayCode() : "-";
+                String disp = (carrinho.getDisplayCode() != null) ? carrinho.getDisplayCode() : "-";
                 PdfPCell c3 = new PdfPCell(new Phrase(disp, itemFont));
                 c3.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(c3);
 
-                String cell = (carrinho.getDisplayCell() != null) ? carrinho.getDisplayCell().getCellCode() : "-";
+                String cell = (carrinho.getCellCode() != null) ? carrinho.getCellCode() : "-";
                 PdfPCell c4 = new PdfPCell(new Phrase(cell, itemFont));
                 c4.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(c4);

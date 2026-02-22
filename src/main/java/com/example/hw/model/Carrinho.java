@@ -33,6 +33,11 @@ public class Carrinho {
     @jakarta.persistence.OneToOne(mappedBy = "carrinho")
     private DisplayCell displayCell;
 
+    @jakarta.persistence.Transient
+    private String displayCode;
+    @jakarta.persistence.Transient
+    private String cellCode;
+
     public Carrinho() {}
 
     public Carrinho(Long id, String codigo, String descricao, CategoriaCarrinho categoria) {
@@ -42,7 +47,40 @@ public class Carrinho {
         this.categoria = categoria;
     }
 
+    public Carrinho(Long id, String codigo, String descricao, CategoriaCarrinho categoria, String displayCode, String cellCode) {
+        this.id = id;
+        this.codigo = codigo;
+        this.descricao = descricao;
+        this.categoria = categoria;
+        this.displayCode = displayCode;
+        this.cellCode = cellCode;
+    }
+
     // getters and setters
+
+    public String getDisplayCode() {
+        if (displayCode != null) return displayCode;
+        if (displayCell != null && displayCell.getDisplay() != null) {
+            return displayCell.getDisplay().getDisplayCode();
+        }
+        return null;
+    }
+
+    public void setDisplayCode(String displayCode) {
+        this.displayCode = displayCode;
+    }
+
+    public String getCellCode() {
+        if (cellCode != null) return cellCode;
+        if (displayCell != null) {
+            return displayCell.getCellCode();
+        }
+        return null;
+    }
+
+    public void setCellCode(String cellCode) {
+        this.cellCode = cellCode;
+    }
 
     public DisplayCell getDisplayCell() {
         return displayCell;

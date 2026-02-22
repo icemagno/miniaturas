@@ -25,7 +25,7 @@ public class CarrinhoController {
 
     @GetMapping("/export/pdf")
     public ResponseEntity<byte[]> exportPdf() {
-        List<Carrinho> carrinhos = carrinhoService.findAll();
+        List<Carrinho> carrinhos = carrinhoService.findAllProjected();
         byte[] pdf = pdfService.createPdf(carrinhos);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=carrinhos.pdf")
@@ -35,7 +35,7 @@ public class CarrinhoController {
 
     @GetMapping("/export/pdf/alphabetical")
     public ResponseEntity<byte[]> exportPdfAlphabetical() {
-        List<Carrinho> carrinhos = carrinhoService.findAllAlphabetically();
+        List<Carrinho> carrinhos = carrinhoService.findAllProjected();
         byte[] pdf = pdfService.createAlphabeticalPdf(carrinhos);
         return ResponseEntity.ok()
                 .header("Content-Disposition", "attachment; filename=carrinhos-alfabetico.pdf")

@@ -22,6 +22,10 @@ public class CarrinhoService {
         return carrinhoRepository.findAll();
     }
 
+    public List<Carrinho> findAllProjected() {
+        return carrinhoRepository.findProjectedAll();
+    }
+
     public List<Carrinho> findAllAlphabetically() {
         return carrinhoRepository.findAllByOrderByDescricaoAsc();
     }
