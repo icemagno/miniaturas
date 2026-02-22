@@ -5,7 +5,6 @@
 *.log
 
 # Backup and Private scripts
-src/main/java/com/example/hw/service/BackupService.java
 *.sql
 *.ps1
 
