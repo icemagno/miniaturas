@@ -21,7 +21,8 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/login", 
                         "/common/**", 
-                        "/adminlte/**"
+                        "/adminlte/**",
+                        "/getimage/**"
                     ).permitAll()
                     .anyRequest().authenticated()
             )
